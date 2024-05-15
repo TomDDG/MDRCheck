@@ -13,7 +13,12 @@ int main(int argc, char* argv[]) {
     FILE* fp_in;
     unsigned char* mdr;
     //
-    if (argc < 2) error(1);
+    if (argc < 2) {
+        printf("Usage: mdrcheck input.mdr\n");
+        exit(0);
+    }
+    printf("MDRCheck v0.1\n");
+    printf("------+-----------------+-------------+-----------+--------+--------+-----------------+-------------+------------\n");
     //
     if ((fp_in = fopen(argv[1], "rb")) == NULL) error(2); // cannot open mdr for read
     fseek(fp_in, 0, SEEK_END); // jump to the end of the file to get the length
@@ -51,7 +56,7 @@ int main(int argc, char* argv[]) {
             }
             printf("S:%3d | ", mdr[1 + i * 543]);
             printf("CN:\"");
-            for (j = 4; j < 14; j++) if (mdr[j + i * 543] >= 32 && mdr[j + i * 543] < 129) printf("%c", mdr[j + i * 543]); else printf("*");
+            for (j = 4; j < 14; j++) if (mdr[j + i * 543] >= 32 && mdr[j + i * 543] < 129) printf("%c", mdr[j + i * 543]); else printf("#");
             printf("\" | ");
             printf("HC:%02x,%02x(%c) | ", chksum, mdr[14 + i * 543], (chksum - mdr[14 + i * 543] == 0) ? 'o' : 'x');
             if (chksum - mdr[14 + i * 543]) badCSH++;
@@ -70,7 +75,7 @@ int main(int argc, char* argv[]) {
                 printf("DL:%3d | ", mdr[18 + i * 543] * 256 + mdr[17 + i * 543]);
             }
             printf("FN:\"");
-            for (j = 19; j < 29; j++) if (mdr[j + i * 543] >= 32 && mdr[j + i * 543] < 129) printf("%c", mdr[j + i * 543]); else printf("*");
+            for (j = 19; j < 29; j++) if (mdr[j + i * 543] >= 32 && mdr[j + i * 543] < 129) printf("%c", mdr[j + i * 543]); else printf("#");
             printf("\" | ");
             for (j = 15, chksum = 0; j < 29; j++) {
                 chksum += mdr[j + i * 543];
@@ -93,8 +98,9 @@ int main(int argc, char* argv[]) {
         }
         i++;
     } while (i * 543 < filesize - 543);
-    printf("Total Sectors Read:%3d | Blank Sectors:%3d | Bad: Sector:%3d, Header:%3d, Data:%3d\n", i, blankSectors, badCSH, badCSRH, badCSR);
-    printf("Key: S -Sector #\n     HC-Checks Header Checksum Ok(o)/Bad(x)\n     RF-Record Flag (R-Record,P-Print or Blank,E-EoF,X-Invalid)\n     DN-Data Block Sequence # (starts at 0)\n     RL-Data Block Length (Bytes)\n     RC-Checks Record Descriptor Checksum Ok(o)/Bad(x)\n     DC-Checks Data Checksum Ok(o)/Bad(x)\n");
+    printf("------+-----------------+-------------+-----------+--------+--------+-----------------+-------------+------------\n");
+    printf("Total Sectors Read:%3d | Blank Sectors:%3d | Bad Checksum: Header=%3d, Record Header=%3d, Data=%3d\n", i, blankSectors, badCSH, badCSRH, badCSR);
+    printf("Key: S -Sector #\n     CN:Cartridge Name\n     HC-Checks Header Checksum Ok(o)/Bad(x)\n     RF-Record Flag (R-Record,P-Print or Blank,E-EoF,X-Invalid)\n     DN-Data Block Sequence # (starts at 0)\n     DL-Data Block Length (Bytes)\n     FN:Filename\n     RC-Checks Record Descriptor Checksum Ok(o)/Bad(x)\n     DC-Checks Data Checksum Ok(o)/Bad(x)\n");
     //if(blankSectors) printf("Image contains %d blank sectors\n",blankSectors);
     // if(badCSH) printf("Image contains %d sector headers with bad checksums\n",badCSH);
     // if(badCSRH) printf("Image contains %d sector record headers with bad checksums\n",badCSRH);
