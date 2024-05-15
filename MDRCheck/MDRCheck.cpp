@@ -27,7 +27,7 @@ int main(int argc, char* argv[]) {
     //
 
     //
-    printf("Cartridge Name: \"");
+    //printf("Cartridge Name: \"");
     j = 4;
     while (j < 137926) {
         if (mdr[j] != 0x00) break;
@@ -37,10 +37,9 @@ int main(int argc, char* argv[]) {
         printf("Error: MDR does not contain any valid sectors\n");
         return 0;
     }
-    // rewind
-    // create blank mdr with name
-    for (i = 0; i < 10; i++) printf("%c", mdr[j + i]);
-    printf("\"\n");
+    //
+    //for (i = 0; i < 10; i++) printf("%c", mdr[j + i]);
+    //printf("\"\n");
     //checksum test
     i = 0;
     do {
@@ -50,16 +49,29 @@ int main(int argc, char* argv[]) {
                 chksum += mdr[j + i * 543];
                 chksum = chksum % 255;
             }
-            printf("Sector %3d -> ", mdr[1 + i * 543]);
+            printf("S:%3d | ", mdr[1 + i * 543]);
+            printf("CN:\"");
+            for (j = 4; j < 14; j++) if (mdr[j + i * 543] >= 32 && mdr[j + i * 543] < 129) printf("%c", mdr[j + i * 543]); else printf("*");
+            printf("\" | ");
             printf("HC:%02x,%02x(%c) | ", chksum, mdr[14 + i * 543], (chksum - mdr[14 + i * 543] == 0) ? 'o' : 'x');
             if (chksum - mdr[14 + i * 543]) badCSH++;
-            printf("RF:%02x | ", mdr[15 + i * 543]);
+            printf("RF:%02x(", mdr[15 + i * 543]);
+            //printf("RF:%02x | ", mdr[15 + i * 543]);
+            if (mdr[15 + i * 543] == 0x00) printf("P ) | ");
+            else if (mdr[15 + i * 543] == 0x02) printf("PE) | ");
+            else if (mdr[15 + i * 543] == 0x04) printf("R ) | ");
+            else if (mdr[15 + i * 543] == 0x06) printf("RE) | ");
+            else printf("X ) | ");
+            printf("DN:%3d | ", mdr[16 + i * 543]);
             if (mdr[18 + i * 543] * 256 + mdr[17 + i * 543] > 512) {
-                printf("RL:### | ");
+                printf("DL:### | ");
             }
             else {
-                printf("RL:%3d | ", mdr[18 + i * 543] * 256 + mdr[17 + i * 543]);
+                printf("DL:%3d | ", mdr[18 + i * 543] * 256 + mdr[17 + i * 543]);
             }
+            printf("FN:\"");
+            for (j = 19; j < 29; j++) if (mdr[j + i * 543] >= 32 && mdr[j + i * 543] < 129) printf("%c", mdr[j + i * 543]); else printf("*");
+            printf("\" | ");
             for (j = 15, chksum = 0; j < 29; j++) {
                 chksum += mdr[j + i * 543];
                 chksum = chksum % 255;
@@ -81,7 +93,8 @@ int main(int argc, char* argv[]) {
         }
         i++;
     } while (i * 543 < filesize - 543);
-    printf("Total Sectors Read:%3d\nBlank Sectors:%3d\nBad Checksums: Sector:%3d, Header:%3d, Data:%3d\n", i, blankSectors, badCSH, badCSRH, badCSR);
+    printf("Total Sectors Read:%3d | Blank Sectors:%3d | Bad: Sector:%3d, Header:%3d, Data:%3d\n", i, blankSectors, badCSH, badCSRH, badCSR);
+    printf("Key: S -Sector #\n     HC-Checks Header Checksum Ok(o)/Bad(x)\n     RF-Record Flag (R-Record,P-Print or Blank,E-EoF,X-Invalid)\n     DN-Data Block Sequence # (starts at 0)\n     RL-Data Block Length (Bytes)\n     RC-Checks Record Descriptor Checksum Ok(o)/Bad(x)\n     DC-Checks Data Checksum Ok(o)/Bad(x)\n");
     //if(blankSectors) printf("Image contains %d blank sectors\n",blankSectors);
     // if(badCSH) printf("Image contains %d sector headers with bad checksums\n",badCSH);
     // if(badCSRH) printf("Image contains %d sector record headers with bad checksums\n",badCSRH);
